@@ -5,17 +5,20 @@
 #include <vector>
 #include <limits>
 #include <queue>
-#include <utility>
 
 using namespace std;
 
 class Enrutador {
 public:
     int id;
-    vector<pair<int, int>> vecinos; // (id_vecino, costo)
+    vector<int> vecinos; // IDs de los vecinos
+    vector<int> costos;  // Costos asociados a cada vecino
+    vector<int> tabla_ruteo; // Tabla de enrutamiento (costos a cada destino)
 
     Enrutador(int id);
     void agregarVecino(int id_vecino, int costo);
+    void eliminarVecino(int id_vecino);
+    void mostrarTablaRuteo() const;
 };
 
 class Red {

@@ -1,11 +1,40 @@
-#include "enrutador.h"
+#include "Enrutador.h"
 
 // Constructor de Enrutador
 Enrutador::Enrutador(int id) : id(id) {}
 
 // Método para agregar un vecino
 void Enrutador::agregarVecino(int id_vecino, int costo) {
-    vecinos.push_back(make_pair(id_vecino, costo));
+    vecinos.push_back(id_vecino);
+    costos.push_back(costo);
+    // Actualizar la tabla de enrutamiento
+    if (tabla_ruteo.size() <= id_vecino) {
+        tabla_ruteo.resize(id_vecino + 1, numeric_limits<int>::max());
+    }
+    tabla_ruteo[id_vecino] = costo; // Agregar a la tabla de enrutamiento
+}
+
+// Método para eliminar un vecino
+void Enrutador::eliminarVecino(int id_vecino) {
+    auto it = find(vecinos.begin(), vecinos.end(), id_vecino);
+    if (it != vecinos.end()) {
+        int index = distance(vecinos.begin(), it);
+        vecinos.erase(it);
+        costos.erase(costos.begin() + index);
+        tabla_ruteo[id_vecino] = numeric_limits<int>::max(); // Resetear costo en la tabla de enrutamiento
+    } else {
+        cerr << "Vecino " << id_vecino << " no encontrado." << endl;
+    }
+}
+
+// Mostrar la tabla de enrutamiento
+void Enrutador::mostrarTablaRuteo() const{
+    cout << "Tabla de enrutamiento para el enrutador " << id << ":" << endl;
+    for (size_t i = 0; i < tabla_ruteo.size(); ++i) {
+        if (tabla_ruteo[i] != numeric_limits<int>::max()) {
+            cout << "Destino: " << i << ", Costo: " << tabla_ruteo[i] << endl;
+        }
+    }
 }
 
 // Método para agregar un enrutador a la red
@@ -33,21 +62,22 @@ void Red::dijkstra(int id_inicio) {
         int id_actual = pq.top().second;
         pq.pop();
 
-        for (auto& vecino : enrutadores[id_actual].vecinos) {
-            int id_vecino = vecino.first;
-            int costo = vecino.second;
+        for (size_t i = 0; i < enrutadores[id_actual].vecinos.size(); ++i) {
+            int id_vecino = enrutadores[id_actual].vecinos[i];
+            int costo = enrutadores[id_actual].costos[i];
 
             if (dist[id_actual] + costo < dist[id_vecino]) {
                 dist[id_vecino] = dist[id_actual] + costo;
                 prev[id_vecino] = id_actual;
                 pq.push(make_pair(dist[id_vecino], id_vecino));
+                // Actualizar la tabla de enrutamiento
+                enrutadores[id_actual].tabla_ruteo[id_vecino] = dist[id_vecino];
             }
         }
     }
 
-    // Imprimir la tabla de enrutamiento
-    cout << "Distancias desde el enrutador " << id_inicio << ":\n";
-    for (int i = 0; i < n; i++) {
-        cout << "Enrutador " << i << ": " << dist[i] << " (Prev: " << prev[i] << ")\n";
+    // Mostrar la tabla de enrutamiento para cada enrutador
+    for (const auto& enrutador : enrutadores) {
+        enrutador.mostrarTablaRuteo();
     }
 }
