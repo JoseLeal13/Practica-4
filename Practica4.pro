@@ -9,3 +9,6 @@ SOURCES += \
 
 HEADERS += \
     enrutador.h
+
+DISTFILES += \
+    topologia

@@ -5,6 +5,7 @@
 #include <vector>
 #include <limits>
 #include <queue>
+#include <fstream>
 
 using namespace std;
 
@@ -26,8 +27,11 @@ public:
     vector<Enrutador> enrutadores;
 
     void agregarEnrutador(int id);
+    void eliminarEnrutador(int id);
     void agregarEnlace(int id1, int id2, int costo);
+    void eliminarEnlace(int id1, int id2);
     void dijkstra(int id_inicio);
+    void cargarDesdeArchivo(const string& nombre_archivo);
 };
 
 #endif // ENRUTADOR_H

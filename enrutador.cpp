@@ -28,11 +28,13 @@ void Enrutador::eliminarVecino(int id_vecino) {
 }
 
 // Mostrar la tabla de enrutamiento
-void Enrutador::mostrarTablaRuteo() const{
+void Enrutador::mostrarTablaRuteo() const {
     cout << "Tabla de enrutamiento para el enrutador " << id << ":" << endl;
     for (size_t i = 0; i < tabla_ruteo.size(); ++i) {
         if (tabla_ruteo[i] != numeric_limits<int>::max()) {
             cout << "Destino: " << i << ", Costo: " << tabla_ruteo[i] << endl;
+        } else {
+            cout << "Destino: " << i << ", Costo: Infinito" << endl; // Mostrar inalcanzables
         }
     }
 }
@@ -42,10 +44,37 @@ void Red::agregarEnrutador(int id) {
     enrutadores.emplace_back(id);
 }
 
+// Método para eliminar un enrutador de la red
+void Red::eliminarEnrutador(int id) {
+    if (id < 0 || id >= enrutadores.size()) {
+        cerr << "ID de enrutador no válido." << endl;
+        return;
+    }
+
+    // Eliminar enlaces de otros enrutadores
+    for (auto& enrutador : enrutadores) {
+        enrutador.eliminarVecino(id);
+    }
+
+    // Eliminar el enrutador
+    enrutadores.erase(enrutadores.begin() + id);
+}
+
 // Método para agregar un enlace entre enrutadores
 void Red::agregarEnlace(int id1, int id2, int costo) {
     enrutadores[id1].agregarVecino(id2, costo);
     enrutadores[id2].agregarVecino(id1, costo); // Asumimos que es una red no dirigida
+}
+
+// Método para eliminar un enlace entre enrutadores
+void Red::eliminarEnlace(int id1, int id2) {
+    if (id1 < 0 || id1 >= enrutadores.size() || id2 < 0 || id2 >= enrutadores.size()) {
+        cerr << "ID de enrutador no válido." << endl;
+        return;
+    }
+
+    enrutadores[id1].eliminarVecino(id2);
+    enrutadores[id2].eliminarVecino(id1);
 }
 
 // Método para ejecutar el algoritmo de Dijkstra
@@ -70,8 +99,9 @@ void Red::dijkstra(int id_inicio) {
                 dist[id_vecino] = dist[id_actual] + costo;
                 prev[id_vecino] = id_actual;
                 pq.push(make_pair(dist[id_vecino], id_vecino));
-                // Actualizar la tabla de enrutamiento
-                enrutadores[id_actual].tabla_ruteo[id_vecino] = dist[id_vecino];
+
+                // Actualizar la tabla de enrutamiento del enrutador vecino
+                enrutadores[id_vecino].tabla_ruteo[id_inicio] = dist[id_vecino];
             }
         }
     }
@@ -80,4 +110,26 @@ void Red::dijkstra(int id_inicio) {
     for (const auto& enrutador : enrutadores) {
         enrutador.mostrarTablaRuteo();
     }
+}
+
+// Método para cargar la red desde un archivo
+void Red::cargarDesdeArchivo(const string& nombre_archivo) {
+    ifstream archivo(nombre_archivo);
+    if (!archivo.is_open()) {
+        cerr << "No se pudo abrir el archivo." << endl;
+        return;
+    }
+
+    int num_enrutadores, id1, id2, costo;
+    archivo >> num_enrutadores;
+
+    for (int i = 0; i < num_enrutadores; ++i) {
+        agregarEnrutador(i);
+    }
+
+    while (archivo >> id1 >> id2 >> costo) {
+        agregarEnlace(id1, id2, costo);
+    }
+
+    archivo.close();
 }
