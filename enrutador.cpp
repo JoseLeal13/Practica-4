@@ -29,9 +29,15 @@ void Enrutador::eliminarVecino(int id_vecino) {
 // Mostrar la tabla de enrutamiento
 void Enrutador::mostrarTablaRuteo() const {
     cout << "Tabla de enrutamiento para el enrutador " << id << ":" << endl;
+
+    // Imprimir encabezados de la tabla
+    cout << "Destino   Costo" << endl;
+    cout << "-----------------" << endl; // Línea separadora
+
     for (size_t i = 0; i < tabla_ruteo.size(); ++i) {
-        cout << "Destino: " << i << ", Costo: "
-             << (tabla_ruteo[i] != numeric_limits<int>::max() ? to_string(tabla_ruteo[i]) : "Infinito") << endl;
+        cout << i << "        "
+             << (tabla_ruteo[i] != numeric_limits<int>::max() ? to_string(tabla_ruteo[i]) : "Infinito")
+             << endl;
     }
 }
 
