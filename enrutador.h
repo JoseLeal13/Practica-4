@@ -32,6 +32,12 @@ public:
     void eliminarEnlace(int id1, int id2);
     void dijkstra(int id_inicio);
     void cargarDesdeArchivo(const string& nombre_archivo);
+    void imprimirRed() const;
+
+    // Método para calcular el costo de enviar un paquete
+    int calcularCosto(int id_origen, int id_destino);
+    // Método para determinar el camino más eficiente
+    vector<int> determinarCamino(int id_origen, int id_destino);
 };
 
 #endif // ENRUTADOR_H

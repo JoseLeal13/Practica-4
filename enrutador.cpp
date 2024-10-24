@@ -1,4 +1,4 @@
-#include "Enrutador.h"
+#include "enrutador.h"
 
 // Constructor de Enrutador
 Enrutador::Enrutador(int id) : id(id) {}
@@ -7,11 +7,10 @@ Enrutador::Enrutador(int id) : id(id) {}
 void Enrutador::agregarVecino(int id_vecino, int costo) {
     vecinos.push_back(id_vecino);
     costos.push_back(costo);
-    // Actualizar la tabla de enrutamiento
     if (tabla_ruteo.size() <= id_vecino) {
         tabla_ruteo.resize(id_vecino + 1, numeric_limits<int>::max());
     }
-    tabla_ruteo[id_vecino] = costo; // Agregar a la tabla de enrutamiento
+    tabla_ruteo[id_vecino] = costo;
 }
 
 // Método para eliminar un vecino
@@ -21,7 +20,7 @@ void Enrutador::eliminarVecino(int id_vecino) {
         int index = distance(vecinos.begin(), it);
         vecinos.erase(it);
         costos.erase(costos.begin() + index);
-        tabla_ruteo[id_vecino] = numeric_limits<int>::max(); // Resetear costo en la tabla de enrutamiento
+        tabla_ruteo[id_vecino] = numeric_limits<int>::max();
     } else {
         cerr << "Vecino " << id_vecino << " no encontrado." << endl;
     }
@@ -31,11 +30,8 @@ void Enrutador::eliminarVecino(int id_vecino) {
 void Enrutador::mostrarTablaRuteo() const {
     cout << "Tabla de enrutamiento para el enrutador " << id << ":" << endl;
     for (size_t i = 0; i < tabla_ruteo.size(); ++i) {
-        if (tabla_ruteo[i] != numeric_limits<int>::max()) {
-            cout << "Destino: " << i << ", Costo: " << tabla_ruteo[i] << endl;
-        } else {
-            cout << "Destino: " << i << ", Costo: Infinito" << endl; // Mostrar inalcanzables
-        }
+        cout << "Destino: " << i << ", Costo: "
+             << (tabla_ruteo[i] != numeric_limits<int>::max() ? to_string(tabla_ruteo[i]) : "Infinito") << endl;
     }
 }
 
@@ -51,19 +47,21 @@ void Red::eliminarEnrutador(int id) {
         return;
     }
 
-    // Eliminar enlaces de otros enrutadores
     for (auto& enrutador : enrutadores) {
         enrutador.eliminarVecino(id);
     }
 
-    // Eliminar el enrutador
-    enrutadores.erase(enrutadores.begin() + id);
+    enrutadores.erase(enrutadores.begin () + id);
 }
 
 // Método para agregar un enlace entre enrutadores
 void Red::agregarEnlace(int id1, int id2, int costo) {
+    if (id1 < 0 || id1 >= enrutadores.size() || id2 < 0 || id2 >= enrutadores.size()) {
+        cerr << "ID de enrutador no válido." << endl;
+        return;
+    }
     enrutadores[id1].agregarVecino(id2, costo);
-    enrutadores[id2].agregarVecino(id1, costo); // Asumimos que es una red no dirigida
+    enrutadores[id2].agregarVecino(id1, costo);
 }
 
 // Método para eliminar un enlace entre enrutadores
@@ -72,44 +70,8 @@ void Red::eliminarEnlace(int id1, int id2) {
         cerr << "ID de enrutador no válido." << endl;
         return;
     }
-
     enrutadores[id1].eliminarVecino(id2);
     enrutadores[id2].eliminarVecino(id1);
-}
-
-// Método para ejecutar el algoritmo de Dijkstra
-void Red::dijkstra(int id_inicio) {
-    int n = enrutadores.size();
-    vector<int> dist(n, numeric_limits<int>::max());
-    vector<int> prev(n, -1);
-    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
-
-    dist[id_inicio] = 0;
-    pq.push(make_pair(0, id_inicio));
-
-    while (!pq.empty()) {
-        int id_actual = pq.top().second;
-        pq.pop();
-
-        for (size_t i = 0; i < enrutadores[id_actual].vecinos.size(); ++i) {
-            int id_vecino = enrutadores[id_actual].vecinos[i];
-            int costo = enrutadores[id_actual].costos[i];
-
-            if (dist[id_actual] + costo < dist[id_vecino]) {
-                dist[id_vecino] = dist[id_actual] + costo;
-                prev[id_vecino] = id_actual;
-                pq.push(make_pair(dist[id_vecino], id_vecino));
-
-                // Actualizar la tabla de enrutamiento del enrutador vecino
-                enrutadores[id_vecino].tabla_ruteo[id_inicio] = dist[id_vecino];
-            }
-        }
-    }
-
-    // Mostrar la tabla de enrutamiento para cada enrutador
-    for (const auto& enrutador : enrutadores) {
-        enrutador.mostrarTablaRuteo();
-    }
 }
 
 // Método para cargar la red desde un archivo
@@ -132,4 +94,68 @@ void Red::cargarDesdeArchivo(const string& nombre_archivo) {
     }
 
     archivo.close();
+}
+
+// Método para calcular el costo de enviar un paquete
+int Red::calcularCosto(int id_origen, int id_destino) {
+    // Ejecutar Dijkstra para llenar la tabla de distancias
+    dijkstra(id_origen);
+
+    // Retornar el costo de enviar un paquete
+    return enrutadores[id_destino].tabla_ruteo[id_origen];
+}
+
+// Método para determinar el camino más eficiente
+vector<int> Red::determinarCamino(int id_origen, int id_destino) {
+    vector<int> camino;
+    vector<int> prev(enrutadores.size(), -1);
+    dijkstra(id_origen); // Asegúrate de que se ejecute Dijkstra primero
+
+    // Reconstruir el camino desde el destino hasta el origen
+    for (int at = id_destino; at != -1; at = prev[at]) {
+        camino.push_back(at);
+    }
+    reverse(camino.begin(), camino.end()); // Invertir para obtener el orden correcto
+
+    // Si el primer elemento no es el origen, significa que no hay camino
+    if (camino.empty() || camino[0] != id_origen) {
+        camino.clear(); // No hay camino
+    }
+
+    return camino;
+}
+
+// Modificar el algoritmo de Dijkstra para llenar el vector `prev`
+void Red::dijkstra(int id_inicio) {
+    int n = enrutadores.size();
+    vector<int> dist(n, numeric_limits<int>::max());
+    vector<int> prev(n, -1);
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+
+    dist[id_inicio] = 0;
+    pq.push(make_pair(0, id_inicio));
+
+    while (!pq.empty()) {
+        int id_actual = pq.top().second;
+        pq.pop();
+
+        for (size_t i = 0; i < enrutadores[id_actual].vecinos.size(); ++i) {
+            int id_vecino = enrutadores[id_actual].vecinos[i];
+            int costo = enrutadores[id_actual].costos[i];
+
+            if (dist[id_actual] + costo < dist[id_vecino]) {
+                dist[id_vecino] = dist[id_actual] + costo;
+                prev[id_vecino] = id_actual; // Guardar el nodo anterior
+                pq.push(make_pair(dist[id_vecino], id_vecino));
+
+                // Actualizar la tabla de enrutamiento del enrutador vecino
+                enrutadores[id_vecino].tabla_ruteo[id_inicio] = dist[id_vecino];
+            }
+        }
+    }
+
+    // Mostrar la tabla de enrutamiento para cada enrutador
+    for (size_t i = 0; i < enrutadores.size(); ++i) {
+        enrutadores[i].mostrarTablaRuteo();
+    }
 }
