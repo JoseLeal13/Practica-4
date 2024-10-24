@@ -25,6 +25,7 @@ public:
 class Red {
 public:
     vector<Enrutador> enrutadores;
+    vector<int> prev;
 
     void agregarEnrutador(int id);
     void eliminarEnrutador(int id);

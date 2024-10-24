@@ -107,11 +107,10 @@ int Red::calcularCosto(int id_origen, int id_destino) {
 
 // Método para determinar el camino más eficiente
 vector<int> Red::determinarCamino(int id_origen, int id_destino) {
-    vector<int> camino;
-    vector<int> prev(enrutadores.size(), -1);
     dijkstra(id_origen); // Asegúrate de que se ejecute Dijkstra primero
+    vector<int> camino;
 
-    // Reconstruir el camino desde el destino hasta el origen
+    // Reconstruir el camino desde el destino hasta el origen usando el vector `prev` de la clase
     for (int at = id_destino; at != -1; at = prev[at]) {
         camino.push_back(at);
     }
@@ -129,7 +128,7 @@ vector<int> Red::determinarCamino(int id_origen, int id_destino) {
 void Red::dijkstra(int id_inicio) {
     int n = enrutadores.size();
     vector<int> dist(n, numeric_limits<int>::max());
-    vector<int> prev(n, -1);
+    prev.assign(n, -1); // Utiliza el vector prev de la clase
     priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
 
     dist[id_inicio] = 0;
@@ -145,7 +144,7 @@ void Red::dijkstra(int id_inicio) {
 
             if (dist[id_actual] + costo < dist[id_vecino]) {
                 dist[id_vecino] = dist[id_actual] + costo;
-                prev[id_vecino] = id_actual; // Guardar el nodo anterior
+                prev[id_vecino] = id_actual; // Guardar el nodo anterior en el vector de la clase
                 pq.push(make_pair(dist[id_vecino], id_vecino));
 
                 // Actualizar la tabla de enrutamiento del enrutador vecino
